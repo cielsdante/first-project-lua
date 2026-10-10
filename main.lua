@@ -1,61 +1,71 @@
 local love = require 'love'
-local Player = require 'Player/Player'
 
 function love.load()
+    jack = {
+        x = 0,
+        y = 0,
+        sprite = love.graphics.newImage("sprites/spritesheet.png"),
+        animation = {
+            direction = "right",
+            idle = true,
+            frame = 1,
+            max_frames = 8,
+            speed = 20,
+            timer = 0.1
+        }
+    }
 
-    camera = require 'libraries/camera'
-    cam = camera()
+    SPRITE_WIDTH, SPRITE_HEIGHT = 5352, 569
+    QUAD_WIDTH = 669
+    QUAD_HEIGHT = SPRITE_HEIGHT
 
-    anim8 = require 'libraries/anim8'
-    love.graphics.setDefaultFilter("nearest", "nearest")
+    quads = {}
 
-    player = Player()
-
-    background = love.graphics.newImage('sprites/background.png')
-    
+    for i = 1, jack.animation.max_frames do
+        quads[i] = love.graphics.newQuad(QUAD_WIDTH * (i - 1), 0, QUAD_WIDTH, QUAD_HEIGHT, SPRITE_WIDTH, SPRITE_HEIGHT)
+    end
 end
 
 function love.update(dt)
-
-    local isMoving = false
-
-    -- can add wasd keys if necessary
-    if love.keyboard.isDown("right") then
-        player.x = player.x + player.speed
-        player.anim = player.animations.right
-        isMoving = true
+    if love.keyboard.isDown("d") then
+        jack.animation.idle = false
+        jack.animation.direction = 'right'
+    elseif love.keyboard.isDown("a") then
+        jack.animation.idle = false
+        jack.animation.direction = 'left'
+    else
+        jack.animation.idle = true
+        jack.animation.frame = 1
     end
-    
-    if love.keyboard.isDown("left") then
-        player.x = player.x - player.speed
-        player.anim = player.animations.left
-        isMoving = true
+    if not jack.animation.idle then
+        jack.animation.timer = jack.animation.timer + dt
+
+        if jack.animation.timer > 0.2 then
+            jack.animation.timer = 0.1
+
+            jack.animation.frame = jack.animation.frame + 1
+
+            if jack.animation.direction == "right" then
+                jack.x = jack.x + jack.animation.speed
+            elseif jack.animation.direction == "left" then
+                jack.x = jack.x - jack.animation.speed
+            end
+
+            if jack.animation.frame > jack.animation.max_frames then
+                jack.animation.frame = 1
+            end
+        end
     end
-
-    if love.keyboard.isDown("down") then
-        player.y = player.y + player.speed
-        player.anim = player.animations.down
-        isMoving = true
-    end
-
-    if love.keyboard.isDown("up") then
-        player.y = player.y - player.speed
-        player.anim = player.animations.up
-        isMoving = true
-    end
-
-    if isMoving == false then
-        player.anim:gotoFrame(2)
-    end
-
-    player.anim:update(dt)
-
-    cam:lookAt(player.x, player.y)
 end
 
 function love.draw()
-    cam:attach()
-        love.graphics.draw(background, 0, 0)
-        player.anim:draw(player.spriteSheet, player.x, player.y, nil, 10, nil, 6, 9)
-    cam:detach()
+    love.graphics.scale(0.3)
+
+    if jack.animation.direction == "right" then
+        love.graphics.draw(jack.sprite, quads[jack.animation.frame], jack.x, jack.y)
+    else
+         love.graphics.draw(jack.sprite, quads[jack.animation.frame], jack.x, jack.y, 0, -1, 1, QUAD_WIDTH, 0)
+    end
+
+   
 end
